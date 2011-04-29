@@ -87,5 +87,19 @@
 			</params>
 		</extension>
 		
+		<!-- Event Actions -->
+		
+		<extension point="devblocks.event.action">
+			<id>wgmtwilio.event.action.send_sms</id>
+			<name>Send SMS Event Action</name>
+			<class>
+				<file>api/App.php</file>
+				<name>WgmTwilio_EventActionSendSms</name>
+			</class>
+			<params>
+				<param key="label" value="Send SMS via Twilio" />
+			</params>
+		</extension>
+		
     </extensions> 
 </plugin>

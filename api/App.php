@@ -1,4 +1,5 @@
 <?php
+if(class_exists('Extension_PageMenuItem')):
 class WgmTwilio_SetupPluginsMenuItem extends Extension_PageMenuItem {
 	const POINT = 'wgmtwilio.setup.menu.plugins.twilio';
 	
@@ -8,7 +9,9 @@ class WgmTwilio_SetupPluginsMenuItem extends Extension_PageMenuItem {
 		$tpl->display('devblocks:wgm.twilio::setup/menu_item.tpl');
 	}
 };
+endif;
 
+if(class_exists('Extension_PageSection')):
 class WgmTwilio_SetupSection extends Extension_PageSection {
 	const ID = 'wgmtwilio.setup.twilio';
 	
@@ -52,6 +55,7 @@ class WgmTwilio_SetupSection extends Extension_PageSection {
 		
 	}
 };
+endif;
 
 class WgmTwilio_API {
 	static $_instance = null;
@@ -104,3 +108,33 @@ class WgmTwilio_API {
 		return $this->_default_caller_id;
 	}
 };
+
+if(class_exists('Extension_DevblocksEventAction')):
+class WgmTwilio_EventActionSendSms extends Extension_DevblocksEventAction {
+	function render(Extension_DevblocksEvent $event, Model_TriggerEvent $trigger, $params=array(), $seq=null) {
+		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl->assign('params', $params);
+		$tpl->assign('token_labels', $event->getLabels());
+		
+		if(!is_null($seq))
+			$tpl->assign('namePrefix', 'action'.$seq);
+		
+		$tpl->display('devblocks:wgm.twilio::events/action_send_sms_twilio.tpl');
+	}
+	
+	function run($token, Model_TriggerEvent $trigger, $params, &$values) {
+		$twilio = WgmTwilio_API::getInstance();
+		
+		// Translate message tokens
+		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
+		$content = $tpl_builder->build($params['content'], $values);
+		
+	    $data = array(
+	    	"From" => $twilio->getDefaultCallerId(),
+	    	"To" => $params['phone'],
+	    	"Body" => $content
+	    );
+	    $response = $twilio->request('/SMS/Messages', 'POST', $data); 
+	}
+};
+endif;
