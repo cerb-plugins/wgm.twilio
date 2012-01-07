@@ -114,7 +114,6 @@ class WgmTwilio_EventActionSendSms extends Extension_DevblocksEventAction {
 	function render(Extension_DevblocksEvent $event, Model_TriggerEvent $trigger, $params=array(), $seq=null) {
 		$tpl = DevblocksPlatform::getTemplateService();
 		$tpl->assign('params', $params);
-		$tpl->assign('token_labels', $event->getLabels());
 		
 		if(!is_null($seq))
 			$tpl->assign('namePrefix', 'action'.$seq);
