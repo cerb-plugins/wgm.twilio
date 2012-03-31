@@ -121,8 +121,36 @@ class WgmTwilio_EventActionSendSms extends Extension_DevblocksEventAction {
 		$tpl->display('devblocks:wgm.twilio::events/action_send_sms_twilio.tpl');
 	}
 	
+	function simulate($token, Model_TriggerEvent $trigger, $params, &$values) {
+		$twilio = WgmTwilio_API::getInstance();
+		
+		@$sms_to = $params['phone'];
+		
+		if(empty($sms_to)) {
+			return "[ERROR] No destination phone number.";
+		}
+		
+		// Translate message tokens
+		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
+		if(false !== ($content = $tpl_builder->build($params['content'], $values))) {
+			$out = sprintf(">>> Sending SMS via Twilio\nFrom: %s\nTo: %s\n\n%s\n",
+				$twilio->getDefaultCallerId(),
+				$params['phone'],
+				$content
+			);
+		}
+		
+		return $out;
+	}
+	
 	function run($token, Model_TriggerEvent $trigger, $params, &$values) {
 		$twilio = WgmTwilio_API::getInstance();
+		
+		@$sms_to = $params['phone'];
+		
+		if(empty($sms_to)) {
+			return;
+		}
 		
 		// Translate message tokens
 		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
