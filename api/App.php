@@ -123,19 +123,20 @@ class WgmTwilio_EventActionSendSms extends Extension_DevblocksEventAction {
 	
 	function simulate($token, Model_TriggerEvent $trigger, $params, DevblocksDictionaryDelegate $dict) {
 		$twilio = WgmTwilio_API::getInstance();
+		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
 		
-		@$sms_to = $params['phone'];
+		if(false === ($sms_to = $tpl_builder->build(@$params['phone'], $dict)))
+			$sms_to = null;
 		
 		if(empty($sms_to)) {
 			return "[ERROR] No destination phone number.";
 		}
 		
 		// Translate message tokens
-		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
 		if(false !== ($content = $tpl_builder->build(@$params['content'], $dict))) {
 			$out = sprintf(">>> Sending SMS via Twilio\nFrom: %s\nTo: %s\n\n%s\n",
 				$twilio->getDefaultCallerId(),
-				$params['phone'],
+				$sms_to,
 				$content
 			);
 		}
@@ -145,8 +146,10 @@ class WgmTwilio_EventActionSendSms extends Extension_DevblocksEventAction {
 	
 	function run($token, Model_TriggerEvent $trigger, $params, DevblocksDictionaryDelegate $dict) {
 		$twilio = WgmTwilio_API::getInstance();
+		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
 		
-		@$sms_to = $params['phone'];
+		// Translate message tokens
+		$sms_to = $tpl_builder->build(@$params['phone'], $dict);
 		
 		if(empty($sms_to)) {
 			return;
@@ -157,7 +160,7 @@ class WgmTwilio_EventActionSendSms extends Extension_DevblocksEventAction {
 		
 	    $data = array(
 	    	"From" => $twilio->getDefaultCallerId(),
-	    	"To" => $params['phone'],
+	    	"To" => $sms_to,
 	    	"Body" => $content
 	    );
 	    $response = $twilio->request('/SMS/Messages', 'POST', $data); 
