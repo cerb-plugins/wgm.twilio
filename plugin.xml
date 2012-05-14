@@ -4,31 +4,23 @@
 	<name>Twilio.com Integration</name>
 	<description>This plugin provides integration with Twilio.com for phone/SMS/voicemail functionality.</description>
 	<author>WebGroup Media, LLC.</author>
-	<version>1.0.2</version>
+	<version>1.0.3</version>
 	<link>http://www.cerberusweb.com/support/kb/article/89-Installing_and_configuring_the_Twilio_plugin</link>
 	<image>plugin.png</image>
  
  	<!-- Requirements -->
 
 	<requires>
-		<app_version min="5.8" max="5.8.99" />
+		<app_version min="6.0" max="6.0.99" />
 		<php_extension name="curl" />
 	</requires>
  
 	<!-- Plugin Dependencies -->
 	
 	<dependencies>
-		<require plugin_id="cerberusweb.core" version="5.3.0" />
+		<require plugin_id="cerberusweb.core" version="6.0.0-dev" />
 	</dependencies>
 
-	<!-- Patches -->
-	
-	<patches>
-		<!--
-		<patch version="5.3.0" revision="1" file="patches/5.3.0.php" />
-		-->
-	</patches>
-	
 	<!-- Exported Classes -->
 	
 	<class_loader>
@@ -41,22 +33,6 @@
 			<class name="TwilioRestClient" />
 			<class name="TwilioRestResponse" />
 			<class name="TwilioUtils" />
-			<!--
-			<class name="Conference" />
-			<class name="Dial" />
-			<class name="Gather" />
-			<class name="Hangup" />
-			<class name="Number" />
-			<class name="Pause" />
-			<class name="Play" />
-			<class name="Record" />
-			<class name="Redirect" />
-			<class name="Reject" />
-			<class name="Response" />
-			<class name="Say" />
-			<class name="Sms" />
-			<class name="Verb" />
-			-->
 		</file>
 	</class_loader>
 
