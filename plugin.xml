@@ -4,21 +4,21 @@
 	<name>Twilio.com Integration</name>
 	<description>This plugin provides integration with Twilio.com for phone and SMS functionality using the twilio-php API.  This plugin is intended to be a bridge used by other plugins to communicate with Twilio services.</description>
 	<author>WebGroup Media, LLC.</author>
-	<version>1.0.3</version>
-	<link>http://www.cerberusweb.com/support/kb/article/89-Installing_and_configuring_the_Twilio_plugin</link>
+	<version>1.0.4</version>
+	<link>http://www.cerbweb.com/book/latest/plugins/wgm.twilio.html</link>
 	<image>plugin.png</image>
  
  	<!-- Requirements -->
 
 	<requires>
-		<app_version min="6.0" max="6.0.99" />
+		<app_version min="6.1" max="6.1.99" />
 		<php_extension name="curl" />
 	</requires>
  
 	<!-- Plugin Dependencies -->
 	
 	<dependencies>
-		<require plugin_id="cerberusweb.core" version="6.0.0-dev" />
+		<require plugin_id="cerberusweb.core" version="6.1.0" />
 	</dependencies>
 
 	<!-- Exported Classes -->
@@ -81,6 +81,11 @@
 			</class>
 			<params>
 				<param key="label" value="Send SMS via Twilio" />
+				<param key="events">
+					<value>
+						<data key="*" />
+					</value>
+				</param>				
 			</params>
 		</extension>
 		
