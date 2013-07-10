@@ -38,14 +38,14 @@ class WgmTwilio_SetupSection extends Extension_PageSection {
 			@$default_caller_id = DevblocksPlatform::importGPC($_REQUEST['default_caller_id'],'string','');
 			
 			if(empty($api_sid) || empty($api_token))
-				throw new Exception("Both API fields are required.");			
+				throw new Exception("Both API fields are required.");
 			
 			DevblocksPlatform::setPluginSetting('wgm.twilio','api_sid',$api_sid);
 			DevblocksPlatform::setPluginSetting('wgm.twilio','api_token',$api_token);
 			DevblocksPlatform::setPluginSetting('wgm.twilio','default_caller_id',$default_caller_id);
 			
-		    echo json_encode(array('status'=>true,'message'=>'Saved!'));
-		    return;
+			echo json_encode(array('status'=>true,'message'=>'Saved!'));
+			return;
 			
 		} catch (Exception $e) {
 			echo json_encode(array('status'=>false,'error'=>$e->getMessage()));
@@ -84,7 +84,7 @@ class WgmTwilio_API {
 	}
 	
 	/**
-	 * 
+	 *
 	 * @param string $rel_path
 	 * @param string $method
 	 * @param array $vars
@@ -158,12 +158,12 @@ class WgmTwilio_EventActionSendSms extends Extension_DevblocksEventAction {
 		// Translate message tokens
 		$content = $tpl_builder->build(@$params['content'], $dict);
 		
-	    $data = array(
-	    	"From" => $twilio->getDefaultCallerId(),
-	    	"To" => $sms_to,
-	    	"Body" => $content
-	    );
-	    $response = $twilio->request('/SMS/Messages', 'POST', $data); 
+		$data = array(
+			"From" => $twilio->getDefaultCallerId(),
+			"To" => $sms_to,
+			"Body" => $content
+		);
+		$response = $twilio->request('/SMS/Messages', 'POST', $data);
 	}
 };
 endif;
