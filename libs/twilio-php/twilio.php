@@ -139,10 +139,9 @@
 				$url .= (FALSE === strpos($path, '?')?"?":"&").$encoded;
 
 			// initialize a new curl object
-			$curl = curl_init($url);
+			$curl = DevblocksPlatform::curlInit($url);
 			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
 			
-			curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
 			switch(strtoupper($method)) {
 				case "GET":
 					curl_setopt($curl, CURLOPT_HTTPGET, TRUE);
@@ -175,7 +174,7 @@
 				$pwd = "{$this->AccountSid}:{$this->AuthToken}");
 			
 			// do the request. If FALSE, then an exception occurred
-			if(FALSE === ($result = curl_exec($curl)))
+			if(FALSE === ($result = DevblocksPlatform::curlExec($curl)))
 				throw(new TwilioException(
 					"Curl failed with error " . curl_error($curl)));
 			
