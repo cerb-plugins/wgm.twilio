@@ -125,6 +125,9 @@ class WgmTwilio_EventActionSendSms extends Extension_DevblocksEventAction {
 		$twilio = WgmTwilio_API::getInstance();
 		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
 		
+		if(false === ($sms_from = $tpl_builder->build(@$params['from'], $dict)))
+			$sms_from = $twilio->getDefaultCallerId();
+		
 		if(false === ($sms_to = $tpl_builder->build(@$params['phone'], $dict)))
 			$sms_to = null;
 		
@@ -135,7 +138,7 @@ class WgmTwilio_EventActionSendSms extends Extension_DevblocksEventAction {
 		// Translate message tokens
 		if(false !== ($content = $tpl_builder->build(@$params['content'], $dict))) {
 			$out = sprintf(">>> Sending SMS via Twilio\nFrom: %s\nTo: %s\n\n%s\n",
-				$twilio->getDefaultCallerId(),
+				$sms_from,
 				$sms_to,
 				$content
 			);
@@ -149,17 +152,18 @@ class WgmTwilio_EventActionSendSms extends Extension_DevblocksEventAction {
 		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
 		
 		// Translate message tokens
-		$sms_to = $tpl_builder->build(@$params['phone'], $dict);
 		
-		if(empty($sms_to)) {
+		if(false == ($sms_from = $tpl_builder->build(@$params['from'], $dict)))
+			$sms_from = $twilio->getDefaultCallerId();
+		
+		if(false == ($sms_to = $tpl_builder->build(@$params['phone'], $dict)))
 			return;
-		}
 		
 		// Translate message tokens
 		$content = $tpl_builder->build(@$params['content'], $dict);
 		
 		$data = array(
-			"From" => $twilio->getDefaultCallerId(),
+			"From" => $sms_from,
 			"To" => $sms_to,
 			"Body" => $content
 		);
