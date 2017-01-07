@@ -1,62 +1,4 @@
 <?php
-if(class_exists('Extension_PageMenuItem')):
-class WgmTwilio_SetupPluginsMenuItem extends Extension_PageMenuItem {
-	const POINT = 'wgmtwilio.setup.menu.plugins.twilio';
-	
-	function render() {
-		$tpl = DevblocksPlatform::getTemplateService();
-		$tpl->assign('extension', $this);
-		$tpl->display('devblocks:wgm.twilio::setup/menu_item.tpl');
-	}
-};
-endif;
-
-if(class_exists('Extension_PageSection')):
-class WgmTwilio_SetupSection extends Extension_PageSection {
-	const ID = 'wgmtwilio.setup.twilio';
-	
-	function render() {
-		$tpl = DevblocksPlatform::getTemplateService();
-
-		$visit = CerberusApplication::getVisit();
-		$visit->set(ChConfigurationPage::ID, 'twilio');
-		
-		$params = array(
-			'api_sid' => DevblocksPlatform::getPluginSetting('wgm.twilio','api_sid',''),
-			'api_token' => DevblocksPlatform::getPluginSetting('wgm.twilio','api_token',''),
-			'default_caller_id' => DevblocksPlatform::getPluginSetting('wgm.twilio','default_caller_id',''),
-		);
-		$tpl->assign('params', $params);
-		
-		$tpl->display('devblocks:wgm.twilio::setup/index.tpl');
-	}
-	
-	function saveJsonAction() {
-		try {
-			@$api_sid = DevblocksPlatform::importGPC($_REQUEST['api_sid'],'string','');
-			@$api_token = DevblocksPlatform::importGPC($_REQUEST['api_token'],'string','');
-			@$default_caller_id = DevblocksPlatform::importGPC($_REQUEST['default_caller_id'],'string','');
-			
-			if(empty($api_sid) || empty($api_token))
-				throw new Exception("Both API fields are required.");
-			
-			DevblocksPlatform::setPluginSetting('wgm.twilio','api_sid',$api_sid);
-			DevblocksPlatform::setPluginSetting('wgm.twilio','api_token',$api_token);
-			DevblocksPlatform::setPluginSetting('wgm.twilio','default_caller_id',$default_caller_id);
-			
-			echo json_encode(array('status'=>true,'message'=>'Saved!'));
-			return;
-			
-		} catch (Exception $e) {
-			echo json_encode(array('status'=>false,'error'=>$e->getMessage()));
-			return;
-			
-		}
-		
-	}
-};
-endif;
-
 class WgmTwilio_API {
 	static $_instance = null;
 	private $_api_sid = null;
@@ -65,22 +7,14 @@ class WgmTwilio_API {
 	private $_default_caller_id = '';
 	private $_twilio = null;
 	
-	private function __construct() {
-		$this->_api_sid = DevblocksPlatform::getPluginSetting('wgm.twilio','api_sid','');
-		$this->_api_token = DevblocksPlatform::getPluginSetting('wgm.twilio','api_token','');
-		$this->_default_caller_id = DevblocksPlatform::getPluginSetting('wgm.twilio','default_caller_id','');
-		$this->_twilio = new TwilioRestClient($this->_api_sid, $this->_api_token);
-	}
-	
 	/**
 	 * @return WgmTwilio_API
 	 */
-	static public function getInstance() {
-		if(null == self::$_instance) {
-			self::$_instance = new WgmTwilio_API();
-		}
-
-		return self::$_instance;
+	public function __construct($api_sid, $api_token, $default_caller_id) {
+		$this->_api_sid = $api_sid;
+		$this->_api_token = $api_token;
+		$this->_default_caller_id = $default_caller_id;
+		$this->_twilio = new TwilioRestClient($this->_api_sid, $this->_api_token);
 	}
 	
 	/**
@@ -90,7 +24,7 @@ class WgmTwilio_API {
 	 * @param array $vars
 	 * @return TwilioRestResponse
 	 */
-	public function request($rel_path, $method, $vars) {
+	public function request($rel_path, $method, $vars=array()) {
 		$rel_path = ltrim($rel_path,'/');
 				
 		$path = sprintf("/%s/Accounts/%s/%s",
@@ -98,7 +32,10 @@ class WgmTwilio_API {
 			$this->_api_sid,
 			$rel_path
 		);
-		return $this->_twilio->request($path, $method, $vars);
+		
+		$resp = $this->_twilio->request($path, $method, $vars);
+		
+		return $resp;
 	}
 	
 	/**
@@ -112,17 +49,25 @@ class WgmTwilio_API {
 if(class_exists('Extension_DevblocksEventAction')):
 class WgmTwilio_EventActionSendSms extends Extension_DevblocksEventAction {
 	function render(Extension_DevblocksEvent $event, Model_TriggerEvent $trigger, $params=array(), $seq=null) {
+		$active_worker = CerberusApplication::getActiveWorker();
+		
 		$tpl = DevblocksPlatform::getTemplateService();
 		$tpl->assign('params', $params);
 		
 		if(!is_null($seq))
 			$tpl->assign('namePrefix', 'action'.$seq);
 		
+		if(isset($params['connected_account_id'])) {
+			if(false != ($connected_account = DAO_ConnectedAccount::get($params['connected_account_id']))) {
+				if(Context_ConnectedAccount::isReadableByActor($connected_account, $active_worker))
+					$tpl->assign('connected_account', $connected_account);
+			}
+		}
+		
 		$tpl->display('devblocks:wgm.twilio::events/action_send_sms_twilio.tpl');
 	}
 	
 	function simulate($token, Model_TriggerEvent $trigger, $params, DevblocksDictionaryDelegate $dict) {
-		$twilio = WgmTwilio_API::getInstance();
 		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
 		
 		if(false === ($sms_from = $tpl_builder->build(@$params['from'], $dict)))
@@ -131,8 +76,26 @@ class WgmTwilio_EventActionSendSms extends Extension_DevblocksEventAction {
 		if(false === ($sms_to = $tpl_builder->build(@$params['phone'], $dict)))
 			$sms_to = null;
 		
+		if(!isset($params['connected_account_id']) || empty($params['connected_account_id']))
+			return "[ERROR] No connected account is configured.";
+		
+		if(false == ($connected_account = DAO_ConnectedAccount::get($params['connected_account_id'])))
+			return "[ERROR] Invalid connected account.";
+		
+		if(!Context_ConnectedAccount::isReadableByActor($connected_account, $trigger->getBot()))
+			return "[ERROR] This bot is not authorized to use this connected account.";
+		
+		$credentials = $connected_account->decryptParams();
+		
+		@$api_sid = $credentials['api_sid'];
+		@$api_token = $credentials['api_token'];
+		@$default_caller_id = $credentials['default_caller_id'];
+		
+		if(empty($api_sid) || empty($api_token))
+			return "[ERROR] The connected account credentials are invalid.";
+			
 		if(empty($sms_to)) {
-			return "[ERROR] No destination phone number.";
+			return "[ERROR] No destination phone number was provided.";
 		}
 		
 		// Translate message tokens
@@ -148,11 +111,29 @@ class WgmTwilio_EventActionSendSms extends Extension_DevblocksEventAction {
 	}
 	
 	function run($token, Model_TriggerEvent $trigger, $params, DevblocksDictionaryDelegate $dict) {
-		$twilio = WgmTwilio_API::getInstance();
 		$tpl_builder = DevblocksPlatform::getTemplateBuilder();
 		
-		// Translate message tokens
+		if(false == ($connected_account_id = @$params['connected_account_id']))
+			return;
 		
+		if(false == ($connected_account = DAO_ConnectedAccount::get($connected_account_id)))
+			return false;
+		
+		if(!Context_ConnectedAccount::isReadableByActor($connected_account, $trigger->getBot()))
+			return false;
+		
+		$credentials = $connected_account->decryptParams();
+		
+		@$api_sid = $credentials['api_sid'];
+		@$api_token = $credentials['api_token'];
+		@$default_caller_id = $credentials['default_caller_id'];
+		
+		if(empty($api_sid) || empty($api_token))
+			return false;
+		
+		$twilio = new WgmTwilio_API($api_sid, $api_token, $default_caller_id);
+		
+		// Translate message tokens
 		if(false == ($sms_from = $tpl_builder->build(@$params['from'], $dict)))
 			$sms_from = $twilio->getDefaultCallerId();
 		
@@ -171,3 +152,76 @@ class WgmTwilio_EventActionSendSms extends Extension_DevblocksEventAction {
 	}
 };
 endif;
+
+class ServiceProvider_Twilio extends Extension_ServiceProvider implements IServiceProvider_Popup, IServiceProvider_HttpRequestSigner {
+	const ID = 'wgm.twilio.service.provider';
+	
+	function renderPopup() {
+		$this->_renderPopupAuthForm();
+	}
+	
+	function renderAuthForm() {
+		@$view_id = DevblocksPlatform::importGPC($_REQUEST['view_id'], 'string', '');
+		
+		$tpl = DevblocksPlatform::getTemplateService();
+		
+		$tpl->assign('view_id', $view_id);
+		
+		$tpl->display('devblocks:wgm.twilio::provider/setup.tpl');
+	}
+	
+	function saveAuthFormAndReturnJson() {
+		@$params = DevblocksPlatform::importGPC($_POST['params'], 'array', array());
+		
+		$active_worker = CerberusApplication::getActiveWorker();
+		
+		if(!isset($params['api_sid']) || empty($params['api_sid']))
+			return json_encode(array('status' => false, 'error' => "The 'Account SID' is required."));
+		
+		if(!isset($params['api_token']) || empty($params['api_token']))
+			return json_encode(array('status' => false, 'error' => "The 'Auth Token' is required."));
+		
+		if(!isset($params['default_caller_id']) || empty($params['default_caller_id']))
+			return json_encode(array('status' => false, 'error' => "The 'Default Caller ID' is required."));
+		
+		// Test the credentials
+		
+		$twilio = new WgmTwilio_API($params['api_sid'], $params['api_token'], $params['default_caller_id']);
+		
+		$resp = $twilio->request('.json', 'GET');
+		
+		if($resp->IsError)
+			return json_encode(array('status' => false, 'error' => $resp->ErrorMessage));
+		
+		$json = json_decode($resp->ResponseText, true);
+		
+		if(!isset($json['friendly_name']))
+			return json_encode(array('status' => false, 'error' => "The given account could not be verified."));
+		
+		$id = DAO_ConnectedAccount::create(array(
+			DAO_ConnectedAccount::NAME => sprintf('Twilio: %s', $json['friendly_name']),
+			DAO_ConnectedAccount::EXTENSION_ID => ServiceProvider_Twilio::ID,
+			DAO_ConnectedAccount::OWNER_CONTEXT => CerberusContexts::CONTEXT_WORKER,
+			DAO_ConnectedAccount::OWNER_CONTEXT_ID => $active_worker->id,
+		));
+		
+		DAO_ConnectedAccount::setAndEncryptParams($id, $params);
+		
+		return json_encode(array('status' => true, 'id' => $id));
+	}
+	
+	function authenticateHttpRequest(Model_ConnectedAccount $account, &$ch, &$verb, &$url, &$body, &$headers) {
+		$credentials = $account->decryptParams();
+		
+		if(
+			!isset($credentials['api_sid'])
+			|| !isset($credentials['api_token'])
+		)
+			return false;
+		
+		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+		curl_setopt($ch, CURLOPT_USERPWD, sprintf("%s:%s", $credentials['api_sid'], $credentials['api_token']));
+		return true;
+	}
+	
+};

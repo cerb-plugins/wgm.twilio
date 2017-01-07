@@ -1,7 +1,7 @@
 Cerb Plugins - wgm.twilio
 ===========================================
-Copyright (C) 2012 Webgroup Media, LLC.  
-[http://www.cerberusweb.com/](http://www.cerberusweb.com/)  
+Copyright (C) 2017 Webgroup Media, LLC.  
+[http://cerb.io/](http://cerb.io/)  
 
 What's this?
 ------------
@@ -9,14 +9,12 @@ This plugin provides integration with [Twilio.com](http://www.twilio.com/) for p
 
 Installation
 ------------
-* Change directory to **/cerb6/storage/plugins/**
-* `git clone git://github.com/cerb6-plugins/wgm.twilio.git`
-* In your helpdesk, enable the plugin from **Setup->Plugins**.
-* Click **Setup->Plugins->Twilio** and configure your Twilio API credentials.
+* In Cerb, install the plugin from **Setup->Plugins->Library**.
+* Add an account from **Search->Connected Accounts**.
 
 Credits
 -------
-This plugin was developed by [WebGroup Media, LLC](http://www.cerberusweb.com/).
+This plugin was developed by [Webgroup Media, LLC](http://www.cerberusweb.com/).
 
 License
 -------

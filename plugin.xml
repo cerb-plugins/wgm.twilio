@@ -2,24 +2,30 @@
 <plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.devblocks.com/schema/plugin.xsd">
 	<id>wgm.twilio</id>
 	<name>Twilio.com Integration</name>
-	<description>This plugin provides integration with Twilio.com for phone and SMS functionality using the twilio-php API.  This plugin is intended to be a bridge used by other plugins to communicate with Twilio services.</description>
+	<description>This plugin provides integration with Twilio for voice and SMS functionality.  This plugin is intended to be a bridge used by other plugins to communicate with Twilio services.</description>
 	<author>Webgroup Media, LLC.</author>
-	<version>1.0.21</version>
+	<version>1.0.22</version>
 	<link>http://www.cerbweb.com/book/latest/plugins/wgm.twilio.html</link>
 	<image>plugin.png</image>
  
  	<!-- Requirements -->
 
 	<requires>
-		<app_version min="7.2" max="7.3.99" />
+		<app_version min="7.3" max="7.3.99" />
 		<php_extension name="curl" />
 	</requires>
  
 	<!-- Plugin Dependencies -->
 	
 	<dependencies>
-		<require plugin_id="cerberusweb.core" version="6.4.0" />
+		<require plugin_id="cerberusweb.core" version="7.3.0" />
 	</dependencies>
+	
+	<!-- Patches -->
+	
+	<patches>
+		<patch version="7.3.0" revision="1" file="patches/7.3.0.php" />
+	</patches>
 
 	<!-- Exported Classes -->
 	
@@ -40,36 +46,25 @@
  
 	<extensions>
 
-		<!-- Setup Page Menu Item -->
+		<!-- Service Providers -->
+		
+		<extension point="cerb.service.provider">
+			<id>wgm.twilio.service.provider</id>
+			<name>Twilio</name>
+			<class>
+				<file>api/App.php</file>
+				<name>ServiceProvider_Twilio</name>
+			</class>
+			<params>
+				<param key="contexts">
+					<value>
+						<data key="cerberusweb.contexts.app" />
+						<data key="cerberusweb.contexts.worker" />
+					</value>
+				</param>
+			</params>
+		</extension>
 
-		<extension point="cerberusweb.ui.page.menu.item">
-			<id>wgmtwilio.setup.menu.plugins.twilio</id>
-			<name>Twilio Plugins Menu Item</name>
-			<class>
-				<file>api/App.php</file>
-				<name>WgmTwilio_SetupPluginsMenuItem</name>
-			</class>
-			<params>
-				<param key="page_id" value="core.page.configuration" />
-				<param key="menu_id" value="core.setup.menu.settings" />
-			</params>
-		</extension>
-		
-		<!-- Setup Page Sections -->
-		
-		<extension point="cerberusweb.ui.page.section">
-			<id>wgmtwilio.setup.twilio</id>
-			<name>Setup Page Twilio Section</name>
-			<class>
-				<file>api/App.php</file>
-				<name>WgmTwilio_SetupSection</name>
-			</class>
-			<params>
-				<param key="page_id" value="core.page.configuration" />
-				<param key="uri" value="twilio" />
-			</params>
-		</extension>
-		
 		<!-- Event Actions -->
 		
 		<extension point="devblocks.event.action">
