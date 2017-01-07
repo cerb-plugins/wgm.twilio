@@ -29,7 +29,31 @@ if(!is_null($api_sid) || !is_null($api_token)) {
 	
 	$settings->delete('wgm.twilio', ['api_sid','api_token','default_caller_id']);
 	
-	// [TODO] Update VA actions that use the Twilio account access
+	// Update VA actions that use the Twilio account access
+	
+	$sql = "select id, params_json from decision_node where params_json like '%wgmtwilio.event.action.send_sms%'";
+	$results = $db->GetArrayMaster($sql);
+	
+	foreach($results as $row) {
+		$is_changed = false;
+		
+		if(false == ($json = json_decode($row['params_json'], true)))
+			continue;
+		
+		foreach($json['actions'] as &$action) {
+			if($action['action'] == 'wgmtwilio.event.action.send_sms') {
+				$action['connected_account_id'] = $id;
+				$is_changed = true;
+			}
+		}
+		
+		if($is_changed) {
+			$db->ExecuteMaster(sprintf("UPDATE decision_node SET params_json = %s WHERE id = %d",
+				$db->qstr(json_encode($json)),
+				$row['id']
+			));
+		}
+	}
 }
 
 // ===========================================================================
