@@ -142,7 +142,7 @@
 			$curl = DevblocksPlatform::curlInit($url);
 			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
 			
-			switch(strtoupper($method)) {
+			switch(DevblocksPlatform::strUpper($method)) {
 				case "GET":
 					curl_setopt($curl, CURLOPT_HTTPGET, TRUE);
 					break;
