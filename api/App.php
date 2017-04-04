@@ -153,61 +153,51 @@ class WgmTwilio_EventActionSendSms extends Extension_DevblocksEventAction {
 };
 endif;
 
-class ServiceProvider_Twilio extends Extension_ServiceProvider implements IServiceProvider_Popup, IServiceProvider_HttpRequestSigner {
+class ServiceProvider_Twilio extends Extension_ServiceProvider implements IServiceProvider_HttpRequestSigner {
 	const ID = 'wgm.twilio.service.provider';
 	
-	function renderPopup() {
-		$this->_renderPopupAuthForm();
-	}
-	
-	function renderAuthForm() {
-		@$view_id = DevblocksPlatform::importGPC($_REQUEST['view_id'], 'string', '');
-		
+	function renderConfigForm(Model_ConnectedAccount $account) {
 		$tpl = DevblocksPlatform::getTemplateService();
+		$active_worker = CerberusApplication::getActiveWorker();
 		
-		$tpl->assign('view_id', $view_id);
+		$params = $account->decryptParams($active_worker);
+		$tpl->assign('params', $params);
 		
-		$tpl->display('devblocks:wgm.twilio::provider/setup.tpl');
+		$tpl->display('devblocks:wgm.twilio::provider/edit_params.tpl');
 	}
 	
-	function saveAuthFormAndReturnJson() {
-		@$params = DevblocksPlatform::importGPC($_POST['params'], 'array', array());
+	function saveConfigForm(Model_ConnectedAccount $account, array &$params) {
+		@$edit_params = DevblocksPlatform::importGPC($_POST['params'], 'array', array());
 		
 		$active_worker = CerberusApplication::getActiveWorker();
 		
-		if(!isset($params['api_sid']) || empty($params['api_sid']))
-			return json_encode(array('status' => false, 'error' => "The 'Account SID' is required."));
+		if(!isset($edit_params['api_sid']) || empty($edit_params['api_sid']))
+			return "The 'Account SID' is required.";
 		
-		if(!isset($params['api_token']) || empty($params['api_token']))
-			return json_encode(array('status' => false, 'error' => "The 'Auth Token' is required."));
+		if(!isset($edit_params['api_token']) || empty($edit_params['api_token']))
+			return "The 'Auth Token' is required.";
 		
-		if(!isset($params['default_caller_id']) || empty($params['default_caller_id']))
-			return json_encode(array('status' => false, 'error' => "The 'Default Caller ID' is required."));
+		if(!isset($edit_params['default_caller_id']) || empty($edit_params['default_caller_id']))
+			return "The 'Default Caller ID' is required.";
 		
 		// Test the credentials
 		
-		$twilio = new WgmTwilio_API($params['api_sid'], $params['api_token'], $params['default_caller_id']);
+		$twilio = new WgmTwilio_API($edit_params['api_sid'], $edit_params['api_token'], $edit_params['default_caller_id']);
 		
 		$resp = $twilio->request('.json', 'GET');
 		
 		if($resp->IsError)
-			return json_encode(array('status' => false, 'error' => $resp->ErrorMessage));
+			return $resp->ErrorMessage;
 		
 		$json = json_decode($resp->ResponseText, true);
 		
 		if(!isset($json['friendly_name']))
-			return json_encode(array('status' => false, 'error' => "The given account could not be verified."));
+			return "The given account could not be verified.";
 		
-		$id = DAO_ConnectedAccount::create(array(
-			DAO_ConnectedAccount::NAME => sprintf('Twilio: %s', $json['friendly_name']),
-			DAO_ConnectedAccount::EXTENSION_ID => ServiceProvider_Twilio::ID,
-			DAO_ConnectedAccount::OWNER_CONTEXT => CerberusContexts::CONTEXT_WORKER,
-			DAO_ConnectedAccount::OWNER_CONTEXT_ID => $active_worker->id,
-		));
+		foreach($edit_params as $k => $v)
+			$params[$k] = $v;
 		
-		DAO_ConnectedAccount::setAndEncryptParams($id, $params);
-		
-		return json_encode(array('status' => true, 'id' => $id));
+		return true;
 	}
 	
 	function authenticateHttpRequest(Model_ConnectedAccount $account, &$ch, &$verb, &$url, &$body, &$headers) {
@@ -223,5 +213,4 @@ class ServiceProvider_Twilio extends Extension_ServiceProvider implements IServi
 		curl_setopt($ch, CURLOPT_USERPWD, sprintf("%s:%s", $credentials['api_sid'], $credentials['api_token']));
 		return true;
 	}
-	
 };
