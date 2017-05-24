@@ -4,7 +4,7 @@
 	<name>Twilio.com Integration</name>
 	<description>This plugin provides integration with Twilio for voice and SMS functionality.  This plugin is intended to be a bridge used by other plugins to communicate with Twilio services.</description>
 	<author>Webgroup Media, LLC.</author>
-	<version>1.1.0</version>
+	<version>1.1.1</version>
 	<link>http://www.cerbweb.com/book/latest/plugins/wgm.twilio.html</link>
 	<image>plugin.png</image>
  
