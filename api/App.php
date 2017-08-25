@@ -46,7 +46,6 @@ class WgmTwilio_API {
 	}
 };
 
-if(class_exists('Extension_DevblocksEventAction')):
 class WgmTwilio_EventActionSendSms extends Extension_DevblocksEventAction {
 	function render(Extension_DevblocksEvent $event, Model_TriggerEvent $trigger, $params=array(), $seq=null) {
 		$active_worker = CerberusApplication::getActiveWorker();
@@ -151,7 +150,6 @@ class WgmTwilio_EventActionSendSms extends Extension_DevblocksEventAction {
 		$response = $twilio->request('/SMS/Messages', 'POST', $data);
 	}
 };
-endif;
 
 class ServiceProvider_Twilio extends Extension_ServiceProvider implements IServiceProvider_HttpRequestSigner {
 	const ID = 'wgm.twilio.service.provider';
